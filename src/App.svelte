@@ -1,20 +1,28 @@
 <script>
-
+import Inputs from './inputs.svelte'
 let name = 'dude';
-let chances;
 let game = [];
 let word;
 let wordArr = [];
-let another;
 let won;
 let text;
 let lastGuess;
 let guesses = [];
 let message = '';
- 
-const wordList = [
+const wonGame = 'You won! play again? Click reset to play';
+$: chances = 6 - guesses.length;
+$: gameOver = `${wordArr.join('')} was the word. Game Over, Click Restart to play again.`
+
+let wordList = [
     'apple', 'answer', 'anchor', 'bananna', 'berry', 'boat', 'boot', 'cape', 'cap', 'case', 'chip', 'cherry', 'cone', 'dark', 'deep', 'donkey', 'eight', 'ever', 'elephant', 'fire', 'food', 'good', 'great', 'hour', 'ink', 'jar', 'jump', 'juggle', 'kick', 'kangaroo', 'leopard', 'moon', 'night', 'opera', 'people', 'quiet', 'right', 'scissor', 'temple', 'unicorn', 'victorious', 'wink', 'xylophone', 'yelp', 'zebra'  //list game chooses from
 ];
+
+const getList = (e) => {
+let wordData = e.detail;
+wordList = wordData.map(el => el.word);
+console.log(wordList);
+start();
+}
 
 //chooses a random word from the list as a string
 const random = () => {
@@ -22,7 +30,7 @@ return wordList[Math.floor(Math.random()*wordList.length)];
 }
 //resets changes and gets a random word from the list
 const start = () => {
-	chances = 6;
+	// chances = 6;
 	word = random();
 	guesses = [];
 	lastGuess = '';
@@ -38,34 +46,27 @@ const start = () => {
 
 //takes guess and checks if in array and adds to game
 function play (arg) {
-	if (chances > 0) {
-	lastGuess = arg.toLowerCase();
-	guesses = [...guesses, arg];
-	if (wordArr.includes(lastGuess)) {
-		wordArr.forEach((el, index) => {
-			if (el === lastGuess){
-			game[index] = lastGuess;    //places correct guess in game
-			message = 'You got a letter right!';
-          			}
-        		}
-      		)
+		lastGuess = arg.toLowerCase();
+		if (wordArr.includes(lastGuess)) {
+			wordArr.forEach((el, index) => {
+				if (el === lastGuess){
+					game[index] = lastGuess;    //places correct guess in game
+					message = 'You got a letter right!';
+          		}
+        	})
     	} else {
-    	chances -=1;
-    	message = `Sorry, ${arg} is not in this word.`;
+		message = `Sorry, ${arg} is not in this word.`;
+		guesses = [...guesses, arg];
   		}
-	}
 win();  //checks for a win
-     if (!won && chances < 1) {
-		message = `${wordArr.join('')} was the word. Game Over, Click Restart to play again.`
-		  }
 }
 
 //checks for win conditions and starts another game
 const win = () => {
     if (compareArrays()) {
     chances = 0;
-    message = 'You won! play again? Click reset to play';
-    }
+    message = wonGame;
+	}
 }
 //converts arrays to string and returns boollean value
 const compareArrays = () => {
@@ -82,10 +83,15 @@ start();  //kicks off the game and resets values
 
 <main>
 	<h1>Welcome to Hangman {name}</h1>
+	<Inputs on:getlist={getList} />
     <h1>You have {chances} guesses.</h1>
+	{#if chances}
 	<span>Your guess:</span>
-	<input bind:value={text}>
-    <button on:click={() => play(text)} >guess</button>
+	<input bind:value={text} on:keydown={(event) => {if (event.key === 'Enter') play(text)} } >
+	<button on:click={() => play(text)} >guess</button>
+	{:else}
+	<h2>{gameOver}</h2>
+	{/if}
     <span>Your guesses: {guesses}</span>
     <p>Your last guess: {lastGuess}</p><p>Message: {message}</p>
 	<div id="game">{game.join(' ')}</div>
